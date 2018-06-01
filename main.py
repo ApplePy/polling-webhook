@@ -2,25 +2,46 @@
 from config import Config
 import sys
 import os.path
+from history import History
 import plugins.api
 
 
 def main(config_path):
     config_obj = Config(config_path)
+    # TODO: Custom history.json location
+    url_history = History()
 
     for poll in config_obj["polls"]:
         inbound = poll["inbound"]
         outbound = poll["outbound"]
+        in_url = inbound["url"]
 
-        test = plugins.api.get_poll_plugin(inbound["plugin"], inbound["url"], inbound["plugin_data"])
-        print(test.get_version())   # Returns (tag name, version number)
-        # TODO: Write update-checking (maybe offload to plugin as well?)
-        # TODO: Define hooking plugin interface
-        # TODO: Write call to corresponding hook
+        # Get plugin and get latest version
+        try:
+            poll_plugin = plugins.api.get_poll_plugin(inbound["plugin"], in_url, inbound["plugin_data"])
+            tag_name, version_number = poll_plugin.get_version()
+
+            # Check if updates needed
+            update_needed = in_url not in url_history or version_number > url_history[in_url]
+            if not update_needed:
+                print("No update required for {0}, version {1}.".format(in_url, version_number))
+                continue
+
+            # Call hook
+            print("Update from {0} - old version: {1}, new version: {2}".format(
+                in_url,
+                url_history.get(in_url, "0.0.0"),
+                version_number))
+            hook_plugin = plugins.api.get_hook_plugin(outbound["plugin"], outbound["url"], inbound["plugin_data"])
+            hook_plugin.trigger_webhook(tag_name)
+
+            # Update history
+            url_history[in_url] = version_number
+            url_history.save()
         # TODO: Save result of process to log and/or InfluxDB
-
-    test2 = plugins.api.get_hook_plugin("github", "stuff")
-    test2.success()
+        # TODO: Proper logging mechanism
+        except plugins.api.PluginNotFound as e:
+            print("Plugin {0} not found, skipping update.".format(e))
 
 
 if __name__ == "__main__":
@@ -35,6 +56,3 @@ if __name__ == "__main__":
             sys.exit(1)
 
     main(config_yaml)
-
-
-# TODO: Proper logging mechanism

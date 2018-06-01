@@ -1,5 +1,6 @@
 import re
 import requests
+import os.path
 
 NAME = "github"
 TYPE = ["poll", "hook"]
@@ -16,7 +17,8 @@ class Poll(object):
         self._tag_regex = re.compile(extra_data["tag"])
 
     def _get_repo(self):
-        url_parts = self._url.split("/")
+        url_sans_extension = os.path.splitext(self._url)[0]
+        url_parts = url_sans_extension.split("/")
         return url_parts[3:5]
 
     def _parse_api_tags(self, response_json):
@@ -35,8 +37,12 @@ class Poll(object):
 
         # Query Github API
         query_url = "https://api.github.com/repos/{0}/{1}/git/refs/tags".format(*parts)
-        response_json = requests.get(query_url).json()
-        tags = self._parse_api_tags(response_json)
+        response = requests.get(query_url)
+        if response.status_code != 200:
+            raise RuntimeError("Repository '{1}' by '{0}' not found.".format(*parts))
+
+        # Get API tags
+        tags = self._parse_api_tags(response.json())
 
         # Get latest tag
         latest_tag = tags[0]
