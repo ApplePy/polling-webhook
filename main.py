@@ -13,9 +13,9 @@ def main(config_path):
         outbound = poll["outbound"]
 
         test = plugins.api.get_poll_plugin(inbound["plugin"], inbound["url"], inbound["plugin_data"])
-        test.success()
-        # TODO: Define plugin interface
+        print(test.get_version())   # Returns (tag name, version number)
         # TODO: Write update-checking (maybe offload to plugin as well?)
+        # TODO: Define hooking plugin interface
         # TODO: Write call to corresponding hook
         # TODO: Save result of process to log and/or InfluxDB
 
