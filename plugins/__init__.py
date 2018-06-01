@@ -93,7 +93,7 @@ _polls, _hooks = _setup()
 
 # Save all found plugins
 for plugin in _polls:
-    _POLL_PLUGINS[plugin.NAME] = plugin
+    _POLL_PLUGINS[plugin.NAME.lower()] = plugin
 
 for plugin in _hooks:
-    _HOOK_PLUGINS[plugin.NAME] = plugin
+    _HOOK_PLUGINS[plugin.NAME.lower()] = plugin
