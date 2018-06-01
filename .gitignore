@@ -174,3 +174,4 @@ fabric.properties
 ### Custom Entries
 .idea/
 /config.yaml
+/history.json

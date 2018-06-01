@@ -11,6 +11,7 @@ class History(dict):
         self.update(history)
 
     def load_history(self):
+        """Loads previous version history from file."""
         try:
             with open(self._path, "r") as history_file:
                 return json.load(history_file)
@@ -22,5 +23,6 @@ class History(dict):
             return {}
 
     def save(self):
+        """Saves new version history to file."""
         with open(self._path, "w") as history_file:
             json.dump(self, history_file)
